@@ -517,3 +517,265 @@ class Dog { }             // ✅ 包访问类，只有同包能用
 ### 为什么类不能用 protected
 
 `protected` 的含义是"同包 + 子类能用"。但类的继承关系在编译时就确定了，如果一个类是 `protected`，那它只能被同包的类或它的子类访问，这和包访问级别几乎一样，没有实际意义。
+
+---
+
+## 八、非访问修饰符
+
+非访问修饰符不控制访问权限，而是提供**额外功能**。Java 有 7 种非访问修饰符：
+
+| 修饰符 | 适用范围 | 作用 |
+|--------|---------|------|
+| `static` | 属性、方法、代码块 | 静态，属于类而不是对象 |
+| `final` | 属性、方法、类 | 最终，不可修改/重写/继承 |
+| `abstract` | 方法、类 | 抽象，没有具体实现 |
+| `synchronized` | 方法 | 同一时间只有一个线程能执行 |
+| `transient` | 属性 | 序列化时跳过这个字段 |
+| `volatile` | 属性 | 每次都从内存读取，不缓存 |
+| `native` | 方法 | 用其他语言（C/C++）实现 |
+
+---
+
+### 1. static（静态）
+
+**特点：** 属于类，不属于任何对象。所有对象共享同一个值。
+
+```java
+public class Cat {
+    // 普通属性：每个对象一份
+    String name;
+
+    // 静态属性：所有对象共享
+    static int count = 0;
+
+    public Cat(String name) {
+        this.name = name;
+        count++;  // 每创建一只猫，计数+1
+    }
+
+    // 普通方法：需要对象调用
+    public void speak() {
+        System.out.println(name + "喵喵叫");
+    }
+
+    // 静态方法：直接用类名调用
+    public static int getCount() {
+        return count;
+    }
+}
+```
+
+```java
+Cat c1 = new Cat("小花");
+Cat c2 = new Cat("小黑");
+
+System.out.println(Cat.getCount());  // ✅ 通过类名调用静态方法
+System.out.println(c1.name);         // ✅ 普通属性，通过对象调用
+// System.out.println(c1.speak);     // ❌ 普通方法不能通过类名调用
+
+Cat.count = 10;  // ✅ 可以通过类名修改静态属性
+```
+
+**注意：** 静态方法中不能直接使用 `this` 和普通属性（因为没有对象）。
+
+---
+
+### 2. final（最终）
+
+**final 有三种用法：**
+
+#### 2.1 final 修饰属性 → 常量，不可修改
+
+```java
+public class Cat {
+    final String name = "小花";  // 一次赋值，终身不变
+
+    public void test() {
+        // name = "小黑";  // ❌ 编译错误，不能修改 final 变量
+    }
+}
+```
+
+#### 2.2 final 修饰方法 → 不能被子类重写
+
+```java
+public class Animal {
+    final void eat() {
+        System.out.println("吃东西");
+    }
+}
+
+public class Cat extends Animal {
+    // @Override
+    // void eat() {  // ❌ 编译错误，不能重写 final 方法
+    //     System.out.println("吃鱼");
+    // }
+}
+```
+
+#### 2.3 final 修饰类 → 不能被继承
+
+```java
+final class Animal { }  // 这个类是最终类
+
+// class Cat extends Animal { }  // ❌ 编译错误，不能继承 final 类
+```
+
+> **常见 final 类：** `String`, `Integer`, `Double` 等包装类都是 final 的。
+
+---
+
+### 3. abstract（抽象）
+
+**特点：** 没有具体实现，需要子类来实现。
+
+#### 3.1 abstract 修饰方法 → 只有声明，没有方法体
+
+```java
+public abstract class Animal {
+    // 抽象方法：只有声明，没有实现（没有大括号）
+    public abstract void speak();
+
+    // 普通方法：可以有实现
+    public void breathe() {
+        System.out.println("呼吸");
+    }
+}
+```
+
+#### 3.2 abstract 修饰类 → 不能直接创建对象
+
+```java
+// Animal a = new Animal();  // ❌ 抽象类不能实例化
+
+public class Cat extends Animal {
+    @Override
+    public void speak() {
+        System.out.println("喵喵喵");  // ✅ 子类必须实现所有抽象方法
+    }
+}
+
+Animal a = new Cat();  // ✅ 可以通过子类创建
+a.speak();             // 输出：喵喵喵
+```
+
+**规则：**
+- 抽象类中可以有普通方法
+- 抽象类中可以有构造方法（给子类用）
+- 如果子类没有实现所有抽象方法，子类也必须是抽象类
+
+---
+
+### 4. synchronized（同步）
+
+**作用：** 防止多线程同时访问。一次只有一个线程能执行该方法。
+
+```java
+public class Counter {
+    private int count = 0;
+
+    // synchronized 保证线程安全
+    public synchronized void increment() {
+        count++;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+}
+```
+
+> **注意：** synchronized 会影响性能，单线程环境不需要用。
+
+---
+
+### 5. transient（瞬态）
+
+**作用：** 序列化时跳过这个字段。
+
+```java
+import java.io.Serializable;
+
+public class Cat implements Serializable {
+    String name;
+    transient String password;  // 序列化时不会保存这个字段
+
+    public Cat(String name, String password) {
+        this.name = name;
+        this.password = password;
+    }
+}
+
+// 当把 Cat 对象保存到文件时，name 会保存，password 不会保存
+```
+
+---
+
+### 6. volatile（易变）
+
+**作用：** 每次都从内存读取，不使用缓存值。多线程环境下保证可见性。
+
+```java
+public class SharedData {
+    volatile boolean running = true;  // 其他线程修改后，当前线程能立即看到
+
+    public void stop() {
+        running = false;  // 修改后其他线程立即可见
+    }
+
+    public void work() {
+        while (running) {
+            // 做事情...
+        }
+    }
+}
+```
+
+---
+
+### 7. native（本地）
+
+**作用：** 用其他语言（C/C++）实现。Java 通过 JNI（Java Native Interface）调用。
+
+```java
+public class NativeExample {
+    // 声明本地方法，没有方法体
+    public native void nativeMethod();
+
+    // 加载本地库
+    static {
+        System.loadLibrary("mylib");
+    }
+}
+```
+
+> **注意：** 普通 Java 开发很少用到 native，主要在需要调用系统底层功能时使用。
+
+---
+
+## 九、组合使用
+
+访问修饰符和非访问修饰符可以组合使用：
+
+```java
+public class Cat {
+    // private + final：私有且不可修改
+    private final String name = "小花";
+
+    // public + static：公开的静态方法
+    public static int getCount() {
+        return 0;
+    }
+
+    // protected + abstract：受保护的抽象方法（子类可选重写）
+    protected abstract void eat();
+}
+```
+
+**常见组合：**
+| 组合 | 用途 |
+|------|------|
+| `private final` | 私有常量 |
+| `public static` | 工具方法/常量 |
+| `private static` | 类内部共享数据 |
+| `abstract public` | 抽象方法 |

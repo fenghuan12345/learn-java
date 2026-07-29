@@ -166,6 +166,26 @@ MathUtil.say();             // ❌ 编译报错：普通方法不能用类名调
 | 是否需要创建对象 | 不需要 | 需要 |
 | 能否访问普通属性 | ❌ 不能（没有 this） | ✅ 能 |
 | 能否访问 static 属性 | ✅ 能 | ✅ 能 |
+| 能否直接调用实例方法 | ❌ 不能 | ✅ 能 |
+
+### 注意：static 方法中不能直接调用实例方法
+
+static 方法属于类，没有对象实例，所以不能直接调用实例方法：
+
+```java
+public class Dog {
+    // 实例方法（普通方法）
+    public void bark() {
+        System.out.println("汪汪");
+    }
+
+    // static 方法
+    public static void test() {
+        bark();           // ❌ 编译报错：无法从 static 上下文引用实例方法
+        new Dog().bark(); // ✅ 必须创建对象后调用
+    }
+}
+```
 
 ```java
 public class Dog {
