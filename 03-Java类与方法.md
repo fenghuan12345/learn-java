@@ -349,7 +349,7 @@ public class Cat {
 
 ## 七、访问修饰符
 
-> 详细的访问修饰符说明请查看 [Java访问修饰符.md](Java访问修饰符.md)
+> 详细的访问修饰符说明请查看 [04-Java访问修饰符.md](04-Java访问修饰符.md)
 
 四种修饰符从宽到窄：`public` → `protected` → 无修饰（包访问） → `private`
 
